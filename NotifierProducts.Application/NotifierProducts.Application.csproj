@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NotifierProducts.Domain\NotifierProducts.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,55 +1,38 @@
-using Amazon.SQS;
-using Amazon.SQS.Model;
+using NotifierProducts.Application.UseCases;
 
-namespace CheckPrices.Worker
+namespace NotifierProducts.Worker
 {
     public class Worker : BackgroundService
     {
-        private readonly IAmazonSQS _sqs;
-        private readonly string _queueUrl;
+        private readonly ILogger<Worker> _logger;
+        private readonly ProcessProductUseCase _processProductUseCase;
 
         public Worker(
-            IAmazonSQS sqs,
-            IConfiguration configuration)
+            ILogger<Worker> logger,
+            ProcessProductUseCase processProductUseCase)
         {
-            _sqs = sqs;
-
-            _queueUrl = configuration["AWS:Sqs:QueueUrl"]
-                        ?? throw new ArgumentException("QueueUrl não configurada");
+            _logger = logger;
+            _processProductUseCase = processProductUseCase;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    var response = await _sqs.ReceiveMessageAsync(
-                        new ReceiveMessageRequest
-                        {
-                            QueueUrl = _queueUrl,
-                            MaxNumberOfMessages = 5,
-                            WaitTimeSeconds = 20
-                        },
-                        stoppingToken);
-
-                    foreach (var message in response.Messages)
-                    {
-                        await _sqs.DeleteMessageAsync(
-                            new DeleteMessageRequest
-                            {
-                                QueueUrl = _queueUrl,
-                                ReceiptHandle = message.ReceiptHandle
-                            },
-                            stoppingToken);
-
-                    }
+                    await _processProductUseCase.ExecuteAsync();
                 }
                 catch (OperationCanceledException)
                 {
+                    _logger.LogWarning("Operation was canceled. Worker is stopping.");
+                    break;
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "An unexpected error occurred in the worker loop.");
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                 }
             }
