@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SQS" Version="3.7.502.22" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NotifierProducts.Application\NotifierProducts.Application.csproj" />
+    <ProjectReference Include="..\NotifierProducts.Infra\NotifierProducts.Infra.csproj" />
+  </ItemGroup>
+
 </Project>
